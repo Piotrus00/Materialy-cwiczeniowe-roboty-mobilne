@@ -6,122 +6,195 @@ import time
 predkosc = 1
 wspolczynnik_skretu = 0.6
 
-# graf[node] = [(sasiad, dystans, kierunek)]
-graf = {0: []}
+graf = {(0,0): []}
 
-aktualny_node = 0
+pozycja = (0,0)
+orientacja = "N"
+
+
+# kierunki świata - dla orientacji robota
+kierunki = {
+    "N": (0,1),
+    "E": (1,0),
+    "S": (0,-1),
+    "W": (-1,0)
+}
+
+
+def dodaj_node(pos):
+    if pos not in graf:
+        graf[pos] = []
+
+
+def odwroc(k):
+    return {
+        "L":"R",
+        "R":"L",
+        "F":"F",
+        "B":"B"
+    }[k]
+
+
+def dodaj_krawedz(a,b,kierunek):
+
+    dodaj_node(a)
+    dodaj_node(b)
+
+    if b not in [x[0] for x in graf[a]]:
+        graf[a].append((b,kierunek))
+
+
+    if a not in [x[0] for x in graf[b]]:
+        graf[b].append((a,odwroc(kierunek)))
 
 
 def line_follow(speed, steering):
     deviation = mbuild.quad_rgb_sensor.get_offset_track(1)
 
-    left_eng = -1 * (speed + steering * deviation)
-    right_eng = speed - steering * deviation
+    left = -1*(speed + steering*deviation)
+    right = speed - steering*deviation
 
-    mbot2.drive_speed(left_eng, right_eng)
-
-
-def dodaj_node():
-    nowy = len(graf)
-    graf[nowy] = []
-    return nowy
+    mbot2.drive_speed(left,right)
 
 
-def dodaj_krawedz(a, b, dystans, kierunek):
-    odwrotny = {
-        "L": "R",
-        "R": "L",
-        "F": "F",
-        "B": "B"
+def zmien_orientacje(k):
+    global orientacja
+    tab = ["N", "E", "S", "W"]
+
+    i = tab.index(orientacja)
+
+    if k=="R":
+        i += 1
+
+    elif k=="L":
+        i -= 1
+
+    elif k=="B":
+        i += 2
+
+    orientacja = tab[i%4]
+
+
+
+def wykonaj_ruch(k):
+    global pozycja
+
+    if k=="L":
+        mbot2.turn(-90)
+
+    elif k=="R":
+        mbot2.turn(90)
+
+    elif k=="B":
+        mbot2.turn(180)
+
+
+    mbot2.straight(10)
+    zmien_orientacje(k)
+    dx,dy = kierunki[orientacja]
+
+    pozycja = (pozycja[0]+dx, pozycja[1]+dy)
+
+
+def bfs(start,cel):
+    kolejka=[start]
+    rodzic={
+        start:None
     }
 
-    if b not in [x[0] for x in graf[a]]:
-        graf[a].append((b, dystans, kierunek))
-
-    if a not in [x[0] for x in graf[b]]:
-        graf[b].append((a, dystans, odwrotny[kierunek]))
-
-
-def bfs(start, cel):
-    kolejka = [start]
-    odwiedzone = {start}
-    rodzic = {start: None}
 
     while kolejka:
-        aktualny = kolejka.pop(0)
+        obecny=kolejka.pop(0)
 
-        if aktualny == cel:
+        if obecny==cel:
             break
 
-        for sasiad, dystans, kierunek in graf[aktualny]:
-            if sasiad not in odwiedzone:
-                odwiedzone.add(sasiad)
-                rodzic[sasiad] = aktualny
+        for sasiad,kierunek in graf[obecny]:
+            if sasiad not in rodzic:
+                rodzic[sasiad]=obecny
                 kolejka.append(sasiad)
-    
+
+
     if cel not in rodzic:
         return None
-    sciezka = []
-    node = cel
-    while node is not None:
-        sciezka.append(node)
-        node = rodzic[node]
-    sciezka.reverse()
-    return sciezka
+
+    trasa=[]
+    x=cel
+    while x:
+        trasa.append(x)
+        x=rodzic[x]
+
+    trasa.reverse()
+    return trasa
+
+
+# szukanie ruchu z wierzchołka a do b w grafie
+def znajdz_kierunek(a,b):
+    for s,k in graf[a]:
+        if s==b:
+            return k
+    return None
+
+
+
+def przejedz_trase(trasa):
+    for i in range(len(trasa)-1):
+
+        k = znajdz_kierunek(trasa[i], trasa[i+1])
+
+        wykonaj_ruch(k)
+        time.sleep(0.2)
 
 
 def wybor_trasy():
-    global aktualny_node
 
-    line_all = mbuild.quad_rgb_sensor.get_line_sta("all", 1)
-    line_middle = mbuild.quad_rgb_sensor.get_line_sta("middle", 1)
+    global pozycja
+    stan = mbuild.quad_rgb_sensor.get_line_sta("all",1)
+    stara = pozycja
+    dx,dy = kierunki[orientacja]
 
-    stary = aktualny_node
-    nowy = dodaj_node()
+    if stan==14 or stan==15:
+        nowa = (pozycja[0]-dy, pozycja[1]+dx)
+        dodaj_krawedz(stara, nowa, "L")
+        wykonaj_ruch("L")
 
-    if line_all == 14 or line_all == 15:
-        kierunek = "L"
-        dodaj_krawedz(stary, nowy, 10, kierunek)
-        mbot2.turn(-90)
+    elif stan==7:
+        nowa=(pozycja[0]+dx, pozycja[1]+dy)
+        dodaj_krawedz(stara, nowa, "F")
+        wykonaj_ruch("F")
 
-    elif line_all == 7:
-        kierunek = "F"
-        dodaj_krawedz(stary, nowy, 10, kierunek)
-        mbot2.straight(10)
+    elif stan==3:
+        nowa=(pozycja[0]+dy, pozycja[1]-dx)
+        dodaj_krawedz(stara, nowa, "R")
+        wykonaj_ruch("R")
 
-    elif line_middle == 3:
-        kierunek = "R"
-        dodaj_krawedz(stary, nowy, 10, kierunek)
-        mbot2.turn(90)
 
-    elif line_all == 0:
-        kierunek = "B"
+    elif stan==0:
+        nowa=(pozycja[0]-dx, pozycja[1]-dy)
+        dodaj_krawedz(stara, nowa, "B")
+        wykonaj_ruch("B")
 
-        dodaj_krawedz(stary, nowy, 10, kierunek)
 
-        mbot2.turn(-180)
-        mbot2.straight(10)
-
-    aktualny_node = nowy
 
 
 @event.start
 def on_start():
+
     while True:
         line_follow(predkosc, wspolczynnik_skretu)
+
         if mbuild.quad_rgb_sensor.is_color("blue", "any", 1):
             mbot2.EM_stop("ALL")
-            print("MAPA GRAFU:")
-            for node in graf:
-                print(node, "->", graf[node])
+            cel=pozycja
+            trasa=bfs((0,0), cel)
 
-            cel = len(graf) - 1
-            trasa = bfs(0, cel)
-            print("BFS TRASA:", trasa)
+            przejedz_trase(trasa)
+
             break
 
-        stan = mbuild.quad_rgb_sensor.get_line_sta("all", 1)
-        if stan != 6:
+        stan=mbuild.quad_rgb_sensor.get_line_sta("all", 1)
+
+        if stan!=6:
             wybor_trasy()
 
         time.sleep(0.05)
