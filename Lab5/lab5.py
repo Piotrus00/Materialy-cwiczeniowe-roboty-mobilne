@@ -7,8 +7,8 @@ velocity = 0
 
 def line_follow_proportional_N_N_N(speed, steering, deviation):
     global left_eng, right_eng, velocity
-    left_eng = -1 * ((speed + steering * deviation))
-    right_eng = 1 * ((speed - steering * deviation))
+    left_eng = (speed - steering * deviation)
+    right_eng = -1 * (speed + steering * deviation)
     mbot2.drive_speed(left_eng, right_eng)
 
 @event.start
@@ -21,13 +21,13 @@ def on_start():
         mbot2.EM_stop("ALL")
         cyberpi.audio.play('meow')
         time.sleep(3)
-        mbot2.straight(4)
+        mbot2.straight(3)
 
       if (mbuild.quad_rgb_sensor.is_color("green","any",1)):
         velocity = 20
-        mbot2.straight(4)
+        mbot2.straight(3)
 
       if (mbuild.quad_rgb_sensor.is_color("blue","any",1)):
         velocity = 50
-        mbot2.straight(4)
-
+        mbot2.straight(3)
+        
