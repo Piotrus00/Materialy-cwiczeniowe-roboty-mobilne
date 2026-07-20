@@ -37,7 +37,7 @@ def on_start():
     predkosc = 25
     cross_count = 0.6
     while True:
-        line_follow_N_N_N(25, 0.6, mbuild.quad_rgb_sensor.get_offset_track(1))
+        line_follow_N_N_N(predkosc, 0.6, mbuild.quad_rgb_sensor.get_offset_track(1))
         if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 14:
             cross_logic()
             if cross_count == prog:
