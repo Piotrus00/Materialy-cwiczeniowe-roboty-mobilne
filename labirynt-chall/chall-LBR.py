@@ -38,9 +38,9 @@ def on_start():
     prog = 10
     cross_type = 0
     predkosc = 25
-    wspolczynnik_skretu = 0.6
+    wspolczynnik_skretu = 0.8
     while True:
-      line_follow_N_N_N(predkosc, 0.6, mbuild.quad_rgb_sensor.get_offset_track(1))
+      line_follow_N_N_N(predkosc, wspolczynnik_skretu, mbuild.quad_rgb_sensor.get_offset_track(1))
       # LEWO
       if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 14:
         cross_logic()
@@ -70,7 +70,6 @@ def on_start():
             cyberpi.audio.play('annoyed')
       # PRAWO 
 
-      #TODO DODAC HANDLING PROSTO PO ZAKRECIE W PRAWO
       if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 7:
         cross_logic()
         if cross_count == prog:
