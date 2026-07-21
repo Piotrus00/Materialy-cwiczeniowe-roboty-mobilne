@@ -33,12 +33,12 @@ def cross_logic():
 @event.start
 def on_start():
     global srodkowanie, cross_count, prog, cross_type, predkosc, wspolczynnik_skretu, left_eng, right_eng
-    srodkowanie = 7.7
+    srodkowanie = 6.7
     cross_count = 0
-    prog = 10
+    prog = 5
     cross_type = 0
     predkosc = 25
-    wspolczynnik_skretu = 0.8
+    wspolczynnik_skretu = 0.6
     while True:
       line_follow_N_N_N(predkosc, wspolczynnik_skretu, mbuild.quad_rgb_sensor.get_offset_track(1))
       # LEWO
@@ -61,7 +61,7 @@ def on_start():
           time.sleep(0.2)
 
           # +
-          if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 6:
+          if mbuild.quad_rgb_sensor.get_line_sta("all", 1) != 0:
             mbot2.turn(-90)
             cyberpi.audio.play('meow')
           # T
@@ -79,7 +79,7 @@ def on_start():
           mbot2.motor_stop("all")
           time.sleep(0.2)
           # prosto
-          if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 6:
+          if mbuild.quad_rgb_sensor.get_line_sta("all", 1) != 0:
               cyberpi.audio.play('laugh')
           # skret prawo
           else:
@@ -90,4 +90,9 @@ def on_start():
         cross_logic()
         if cross_count == prog:
             mbot2.motor_stop("all")
-            mbot2.turn(190) # bo krzywe linie
+            time.sleep(0.2)
+
+            mbot2.turn(180) # bo krzywe linie
+            time.sleep(0.2)
+
+      line_follow_N_N_N(predkosc, wspolczynnik_skretu, mbuild.quad_rgb_sensor.get_offset_track(1))
