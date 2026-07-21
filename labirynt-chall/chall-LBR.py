@@ -30,6 +30,15 @@ def cross_logic():
 
     cross_type = mbuild.quad_rgb_sensor.get_line_sta("all", 1)
 
+def red_check():
+    if (mbuild.quad_rgb_sensor.is_color("red","any",1)):
+      cyberpi.audio.play_until('meow')
+      mbot2.turn(-360)
+      cyberpi.led.show('red red red red red')
+      time.sleep(1)
+      cyberpi.stop_all()
+
+
 @event.start
 def on_start():
     global srodkowanie, cross_count, prog, cross_type, predkosc, wspolczynnik_skretu, left_eng, right_eng
@@ -40,7 +49,7 @@ def on_start():
     predkosc = 25
     wspolczynnik_skretu = 0.6
     while True:
-      line_follow_N_N_N(predkosc, wspolczynnik_skretu, mbuild.quad_rgb_sensor.get_offset_track(1))
+      red_check()
       # LEWO
       if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 14:
         cross_logic()
@@ -78,21 +87,15 @@ def on_start():
           mbot2.straight(srodkowanie)
           mbot2.motor_stop("all")
           time.sleep(0.2)
-          # prosto
-          if mbuild.quad_rgb_sensor.get_line_sta("all", 1) != 0:
-              cyberpi.audio.play('laugh')
-          # skret prawo
-          else:
+          # skret w prawo
+          if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 0:
               mbot2.turn(90)
 
         # SLEPY
       if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 0:
-        cross_logic()
-        if cross_count == prog:
-            mbot2.motor_stop("all")
-            time.sleep(0.2)
+          mbot2.motor_stop("all")
+          time.sleep(0.2)
 
-            mbot2.turn(180) # bo krzywe linie
-            time.sleep(0.2)
-
+          mbot2.turn(180) # bo krzywe linie
+          time.sleep(0.2)
       line_follow_N_N_N(predkosc, wspolczynnik_skretu, mbuild.quad_rgb_sensor.get_offset_track(1))
