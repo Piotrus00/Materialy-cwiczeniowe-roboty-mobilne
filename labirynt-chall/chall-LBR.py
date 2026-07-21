@@ -41,40 +41,52 @@ def on_start():
     wspolczynnik_skretu = 0.6
     while True:
       line_follow_N_N_N(predkosc, 0.6, mbuild.quad_rgb_sensor.get_offset_track(1))
+      # LEWO
       if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 14:
         cross_logic()
         if cross_count == prog:
           mbot2.motor_stop("all")
           mbot2.straight(srodkowanie)
           mbot2.motor_stop("all")
-          time.sleep(0.1)
+          time.sleep(0.2)
           mbot2.turn(-90)
 
+      # T lub +
       if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 15:
         cross_logic()
         if cross_count == prog:
           mbot2.motor_stop("all")
           mbot2.straight(srodkowanie)
           mbot2.motor_stop("all")
+          time.sleep(0.2)
+
+          # +
           if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 6:
-            time.sleep(0.1)
             mbot2.turn(-90)
             cyberpi.audio.play('meow')
-
+          # T
           else:
-            time.sleep(0.1)
             mbot2.turn(-90)
             cyberpi.audio.play('annoyed')
+      # PRAWO 
 
+      #TODO DODAC HANDLING PROSTO PO ZAKRECIE W PRAWO
       if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 7:
         cross_logic()
         if cross_count == prog:
           mbot2.motor_stop("all")
+          time.sleep(0.2)
           mbot2.straight(srodkowanie)
           mbot2.motor_stop("all")
-          time.sleep(0.1)
-          mbot2.turn(90)
+          time.sleep(0.2)
+          if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 6:
+              cyberpi.audio.play('laugh')
+          # skret prawo
+          else:
+              mbot2.turn(90)
+              cyberpi.audio.play('hi')
 
+        # SLEPY
       if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 0:
         cross_logic()
         if cross_count == prog:
