@@ -22,13 +22,16 @@ def line_follow_N_N_N(speed, steering, sensor):
 
 def cross_logic():
     global srodkowanie, cross_count, prog, cross_type, predkosc, wspolczynnik_skretu, left_eng, right_eng
-    if cross_type == mbuild.quad_rgb_sensor.get_line_sta("all", 1):
+
+    temp = mbuild.quad_rgb_sensor.get_line_sta("all", 1)
+
+    if cross_type == temp:
       cross_count = cross_count + 1
 
     else:
       cross_count = 0
 
-    cross_type = mbuild.quad_rgb_sensor.get_line_sta("all", 1)
+    cross_type = temp
 
 def red_check():
     if (mbuild.quad_rgb_sensor.is_color("red","any",1)):
@@ -37,6 +40,27 @@ def red_check():
       cyberpi.led.show('red red red red red')
       time.sleep(1)
       cyberpi.stop_all()
+
+def smooth_u_turn():
+    # 1. Zatrzymaj silniki przed manewrem
+    mbot2.motor_stop("all")
+    time.sleep(0.1)
+    
+    # 2. Lekko cofnij, aby środek obrotu był nad końcem linii
+    mbot2.straight(-3) # ruch o 3 cm do tyłu
+    
+    # 3. Rozpocznij obrót w miejscu (prędkość 30 RPM)
+    # EM2 musi mieć ujemną wartość, by oba koła kręciły robota w jedną stronę [4]
+    mbot2.EM_set_speed(30, "EM1")
+    mbot2.EM_set_speed(30, "EM2") # mbot2.turn wewnątrz używa znaków, EM_set_speed wymaga dopasowania
+    
+    # 4. Czekaj, aż środkowe czujniki (L1 i R1) wykryją linię
+    # Status 6 (0110) to idealne centrowanie [6]
+    while not (mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 6):
+        pass
+        
+    # 5. Zatrzymaj się po odnalezieniu trasy
+    mbot2.motor_stop("all")
 
 
 @event.start
@@ -59,6 +83,7 @@ def on_start():
           mbot2.motor_stop("all")
           time.sleep(0.2)
           mbot2.turn(-90)
+          cross_count = 0
 
       # T lub +
       if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 15:
@@ -73,10 +98,12 @@ def on_start():
           if mbuild.quad_rgb_sensor.get_line_sta("all", 1) != 0:
             mbot2.turn(-90)
             cyberpi.audio.play('meow')
+            cross_count = 0
           # T
           else:
             mbot2.turn(-90)
             cyberpi.audio.play('annoyed')
+            cross_count = 0
       # PRAWO 
 
       if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 7:
@@ -90,12 +117,8 @@ def on_start():
           # skret w prawo
           if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 0:
               mbot2.turn(90)
-
+          cross_count = 0
         # SLEPY
       if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 0:
-          mbot2.motor_stop("all")
-          time.sleep(0.2)
-
-          mbot2.turn(180) # bo krzywe linie
-          time.sleep(0.2)
+          smooth_u_turn()
       line_follow_N_N_N(predkosc, wspolczynnik_skretu, mbuild.quad_rgb_sensor.get_offset_track(1))
