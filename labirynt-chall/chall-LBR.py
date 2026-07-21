@@ -78,17 +78,16 @@ def on_start():
           mbot2.straight(srodkowanie)
           mbot2.motor_stop("all")
           time.sleep(0.2)
+          # prosto
           if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 6:
               cyberpi.audio.play('laugh')
           # skret prawo
           else:
               mbot2.turn(90)
-              cyberpi.audio.play('hi')
 
         # SLEPY
       if mbuild.quad_rgb_sensor.get_line_sta("all", 1) == 0:
         cross_logic()
         if cross_count == prog:
             mbot2.motor_stop("all")
-            mbot2.turn(180)
-            cyberpi.audio.play('yummy')
+            mbot2.turn(190) # bo krzywe linie
